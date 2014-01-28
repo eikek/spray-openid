@@ -11,7 +11,9 @@ object Version {
 object Deps {
   val testBasics = Seq(
     "org.scalatest" %% "scalatest" % "1.9.1",
-    "org.scalacheck" %% "scalacheck" % "1.10.1"
+    "org.scalacheck" %% "scalacheck" % "1.10.1",
+    "io.spray" % "spray-can" % Version.spray,
+    "io.spray" % "spray-testkit" % Version.spray
   ) map (_ % "test")
 
   val akka = Seq(
@@ -26,7 +28,7 @@ object Deps {
   )
 
   val spray = Seq(
-    "io.spray" % "spray-can" % Version.spray,
+    "io.spray" % "spray-client" % Version.spray,
     "io.spray" % "spray-routing" % Version.spray
   )
 }
