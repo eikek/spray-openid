@@ -31,13 +31,19 @@ object TestApp extends SimpleRoutingApp with OpenIdDirectives with App {
     """.stripMargin
 
 
+  import SimpleRegistration._
+  val fields = Seq(Field.fullname, Field.email.require, Field.language)
+
   startServer("localhost", 8889) {
-    path("login") {
+    path("") {
       complete(HttpEntity(html, loginPage))
     } ~
     path("verify") {
-      verifyId(OpenIdAuth(verify)) { id =>
-        complete("Login Successful: "+ id)
+      verifyId(OpenIdAuth(verify) andGet sreg(fields)) { id =>
+        val fullname = Field.fullname(id)
+        val email = Field.email(id)
+        val lang = Field.language(id)
+        complete(s"Login Successful: ${id.claimedId}\nFullname: $fullname\nEmail: $email\nLanguage: $lang")
       } ~
       complete("Login failed.")
     }

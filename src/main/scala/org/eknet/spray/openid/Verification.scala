@@ -17,7 +17,8 @@ object Verification {
   private def error(msg: String) = Left(msg)
 
   def verifyAll(uri: Uri, set: Set[ResponseNonce], timeout: FiniteDuration, assoc: Option[Assoc]): Verifyer = {
-    val all = List(nonceTimeout(timeout), nonceOnetime(set), returnToRequest(uri)) ::: assoc.map(verifySignature).toList
+    val all = List(nonceTimeout(timeout), nonceOnetime(set),
+      returnToRequest(uri), SimpleRegistration.verify(_)) ::: assoc.map(verifySignature).toList
     pos => {
       val el: Either[String, PositiveAssertion] = Right(pos)
       all.foldLeft(el) { (res, next) => res.right.flatMap(next) }
@@ -56,7 +57,7 @@ object Verification {
       }
       val mackey = new SecretKeySpec(mac, assoc.assocHmac.name)
       val theirsig = Base64.rfc2045().decode(pos.sig)
-      Crypt.verifySig(mackey)(signedData(pos), theirsig) match {
+      Crypt.verifySig(mackey)(theirsig, signedData(pos)) match {
         case Success(true) => Right(pos)
         case Success(false) => error(s"Signatures do not match.")
         case Failure(ex) => error(s"Error verifying signatures! ${ex.getMessage}")
@@ -69,9 +70,7 @@ object Verification {
     val hzz = assoc.sessionType.hash(zz.toByteArray)
     val dmac = Base64.rfc2045().decode(assoc.resp.macKey)
     if (dmac.length != hzz.length) sys.error("Invalid length of hzz or mackey")
-    hzz.zip(dmac).map {
-      case (h, k) => (h ^ k).toByte
-    }
+    hzz.zip(dmac) map { case (h, k) => (h ^ k).toByte }
   }
 
   private def signedData(pos: PositiveAssertion): Array[Byte] = {

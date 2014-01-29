@@ -9,13 +9,15 @@ import akka.actor.ActorRef
 
 trait CheckIdDirectives extends Directives {
 
-  def redirectCheckIdRequest(verify: ActorRef, suppliedId: String, returnTo: String, realm: Option[String], immediate: Boolean)
+  def redirectCheckIdRequest(verify: ActorRef, suppliedId: String, returnTo: String,
+                             realm: Option[String], immediate: Boolean, adds: Map[String, String] = Map.empty)
                             (implicit ec: ExecutionContext, to: Timeout) =
-    onSuccess(setupCheckIdRequest(verify, suppliedId, returnTo, realm, immediate)) { uri =>
+    onSuccess(setupCheckIdRequest(verify, suppliedId, returnTo, realm, immediate, adds)) { uri =>
       redirect(uri, StatusCodes.Found)
     }
 
-  def setupCheckIdRequest(verify: ActorRef, suppliedId: String, returnTo: String, realm: Option[String], immediate: Boolean)
+  def setupCheckIdRequest(verify: ActorRef, suppliedId: String, returnTo: String,
+                          realm: Option[String], immediate: Boolean, adds: Map[String, String] = Map.empty)
                          (implicit ec: ExecutionContext, to: Timeout) = {
     import ClaimedIdentifier.normalize
     import Discovery.{discover, Discovered}
@@ -27,7 +29,7 @@ trait CheckIdDirectives extends Directives {
     }
 
     normalize(suppliedId).map(discover).flatMap(associate).map { case (ar, discovered) =>
-      val req = CheckIdRequest(discovered.claimedId, returnTo, None, ar.handle, realm, immediate)
+      val req = CheckIdRequest(discovered.claimedId, returnTo, None, ar.handle, realm, adds, immediate)
       req.appendToQuery(Uri(discovered.providerUri))
     }
   }

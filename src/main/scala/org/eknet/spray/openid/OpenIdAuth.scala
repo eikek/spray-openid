@@ -10,11 +10,12 @@ import akka.actor.ActorRef
 case class OpenIdAuth(verify: ActorRef,
                       suppliedId: Option[String] = None,
                       realm: Option[String] = None,
+                      supplement: Map[String, String] = Map.empty,
                       immediate: Boolean = false)(implicit ec: ExecutionContext, to: Timeout)
   extends AssertionDirectives with CheckIdDirectives {
 
   private def redirectToOp(id: String, returnTo: String) =
-    redirectCheckIdRequest(verify, id, returnTo, realm.orElse(Some(returnTo)), immediate)
+    redirectCheckIdRequest(verify, id, returnTo, realm.orElse(Some(returnTo)), immediate, supplement)
 
   val directive = new Directive1[PositiveAssertion] {
     def happly(f: (::[PositiveAssertion, HNil]) => Route) = {
@@ -33,4 +34,7 @@ case class OpenIdAuth(verify: ActorRef,
       }
     }
   }
+
+  def immediateRequest = copy(immediate = true)
+  def andGet (adds: Map[String, String]) = copy(supplement = adds)
 }
