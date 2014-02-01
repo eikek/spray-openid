@@ -1,7 +1,7 @@
 package org.eknet.spray.openid
 
 import spray.http.{Uri, StatusCodes}
-import org.eknet.spray.openid.model.CheckIdRequest
+import org.eknet.spray.openid.model.{Discovery, CheckIdRequest}
 import spray.routing.Directives
 import scala.concurrent.{Future, ExecutionContext}
 import akka.util.Timeout
@@ -29,7 +29,7 @@ trait CheckIdDirectives extends Directives {
     }
 
     normalize(suppliedId).map(discover).flatMap(associate).map { case (ar, discovered) =>
-      val req = CheckIdRequest(discovered.claimedId, returnTo, None, ar.handle, realm, adds, immediate)
+      val req = CheckIdRequest(discovered.claimedId, returnTo, discovered.localId, ar.handle, realm, adds, immediate)
       req.appendToQuery(Uri(discovered.providerUri))
     }
   }

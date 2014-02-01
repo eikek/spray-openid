@@ -5,7 +5,7 @@ import spray.http.Uri
 case class CheckIdRequest(ns: String = namespaceOpenId2,
                           mode: String,
                           claimedId: String,
-                          identity: Option[String],
+                          identity: String,
                           assocHandle: Option[String],
                           returnTo: Option[String],
                           realm: Option[String],
@@ -16,7 +16,7 @@ case class CheckIdRequest(ns: String = namespaceOpenId2,
       "openid.ns" -> ns,
       "openid.mode" -> mode,
       "openid.claimed_id" -> claimedId,
-      "openid.identity" -> identity.getOrElse(claimedId),
+      "openid.identity" -> identity,
       "openid.assoc_handle" -> assocHandle.getOrElse(""),
       "openid.return_to" -> returnTo.getOrElse(""),
       "openid.realm" -> realm.getOrElse("")
@@ -29,7 +29,7 @@ object CheckIdRequest {
 
   def setup(claimedId: String,
             returnTo: String,
-            identity: Option[String],
+            identity: String,
             assocHandle: Option[String],
             realm: Option[String],
             adds: Map[String, String]): CheckIdRequest =
@@ -37,7 +37,7 @@ object CheckIdRequest {
 
   def immediate(claimedId: String,
                 returnTo: String,
-                identity: Option[String],
+                identity: String,
                 assocHandle: Option[String],
                 realm: Option[String],
                 adds: Map[String, String]): CheckIdRequest =
@@ -45,7 +45,7 @@ object CheckIdRequest {
 
   def apply(claimedId: String,
             returnTo: String,
-            identity: Option[String],
+            identity: String,
             assocHandle: Option[String],
             realm: Option[String],
             adds: Map[String, String],

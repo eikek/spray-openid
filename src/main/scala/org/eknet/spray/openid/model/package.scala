@@ -6,6 +6,7 @@ import scala.util.{Success, Try}
 package object model {
   import spray.httpx.unmarshalling._
 
+  val identifierSelect = "http://specs.openid.net/auth/2.0/identifier_select"
   val namespaceOpenId11 = "http://openid.net/signon/1.1"
   val namespaceOpenId2 = "http://specs.openid.net/auth/2.0"
 
