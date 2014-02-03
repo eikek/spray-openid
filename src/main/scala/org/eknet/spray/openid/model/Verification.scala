@@ -1,14 +1,12 @@
-package org.eknet.spray.openid
+package org.eknet.spray.openid.model
 
-import org.eknet.spray.openid.model.PositiveAssertion
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{Future, ExecutionContext}
+import scala.util.{Failure, Success}
+import akka.actor.ActorRefFactory
 import spray.http.{Uri, DateTime}
 import org.eknet.spray.openid.model.PositiveAssertion.ResponseNonce
-import org.parboiled.common.Base64
-import javax.crypto.spec.SecretKeySpec
-import scala.io.Codec
-import org.eknet.spray.openid.VerifyActor.Assoc
-import scala.util.{Failure, Success}
+import org.eknet.spray.openid.model.Discovery._
 
 object Verification {
 
@@ -16,7 +14,7 @@ object Verification {
 
   private def error(msg: String) = Left(msg)
 
-  def verifyAll(uri: Uri, set: Set[ResponseNonce], timeout: FiniteDuration, assoc: Option[Assoc]): Verifyer = {
+  def verifyAll(uri: Uri, set: Set[ResponseNonce], timeout: FiniteDuration, assoc: Option[Association]): Verifyer = {
     val all = List(nonceTimeout(timeout), nonceOnetime(set),
       returnToRequest(uri), SimpleRegistration.verify(_)) ::: assoc.map(verifySignature).toList
     pos => {
@@ -42,7 +40,7 @@ object Verification {
     if (valid) Right(pos) else error(s"ReturnTo url does not match request!")
   }
 
-  def verifySignature(assoc: Assoc): Verifyer = pos => {
+  def verifySignature(assoc: Association): Verifyer = pos => {
     val minimum = Set("op_endpoint", "return_to", "response_nonce", "assoc_handle", "claimed_id", "identity")
     if (!assoc.isValid) {
       error("Association response is not valid anymore.")
@@ -51,13 +49,8 @@ object Verification {
       error("Missing fields in signature: "+ minimum.diff(pos.signed.toSet))
     }
     else {
-      val mac = assoc.serverPubkey match {
-        case Some(pb) => decryptMac(pb, assoc)
-        case _ => Base64.rfc2045().decode(assoc.resp.macKey)
-      }
-      val mackey = new SecretKeySpec(mac, assoc.assocHmac.name)
-      val theirsig = Base64.rfc2045().decode(pos.sig)
-      Crypt.verifySig(mackey)(theirsig, signedData(pos)) match {
+      val key = assoc.cryptedMacKey.getOrElse(assoc.plainMacKey)
+      Crypt.verifySig(key)(pos.sig.decodeBase64, pos.signaturePayload) match {
         case Success(true) => Right(pos)
         case Success(false) => error(s"Signatures do not match.")
         case Failure(ex) => error(s"Error verifying signatures! ${ex.getMessage}")
@@ -65,16 +58,17 @@ object Verification {
     }
   }
 
-  private def decryptMac(pb: BigInt, assoc: VerifyActor.Assoc): Array[Byte] = {
-    val zz = Crypt.DH.sharedSecret(pb, assoc.keypair.getPrivate.getX, assoc.modulus)
-    val hzz = assoc.sessionType.hash(zz.toByteArray)
-    val dmac = Base64.rfc2045().decode(assoc.resp.macKey)
-    if (dmac.length != hzz.length) sys.error("Invalid length of hzz or mackey")
-    hzz.zip(dmac) map { case (h, k) => (h ^ k).toByte }
-  }
+  def verifyDiscovery(pos: PositiveAssertion)(implicit refFactory: ActorRefFactory, ec: ExecutionContext): Future[Boolean] = {
+    def check(providerUri: String, localId: Option[String]) =
+      pos.opEndpoint == providerUri && localId.getOrElse(pos.claimedId) == pos.identity
 
-  private def signedData(pos: PositiveAssertion): Array[Byte] = {
-    val data = pos.signed.map(key => s"$key:${pos.fields.get("openid."+key).getOrElse("")}\n").mkString("")
-    data.getBytes(Codec.UTF8.charSet)
+    discover(pos.claimedId).map {
+      case ServiceList(_, elems) =>
+        elems.exists {
+          case ClaimedIdElement(uri, localid, _, _) => check(uri, localid)
+          case _ => false
+        }
+      case HtmlElement(providerUri, localId) => check(providerUri, localId)
+    }
   }
 }

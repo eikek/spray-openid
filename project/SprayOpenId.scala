@@ -61,9 +61,13 @@ object SprayOpenId extends sbt.Build {
     publishTo := Some("eknet-maven2" at "https://eknet.org/maven2"),
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     pomIncludeRepository := { _ => false },
-    organization := "org.eknet.porter",
+    organization := "org.eknet.spray",
     scalaVersion := Version.scala,
     scalacOptions := Seq("-unchecked", "-deprecation", "-feature"),
+    publishMavenStyle := true,
+    publishTo := Some("eknet-maven2" at "https://eknet.org/maven2"),
+    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+    pomIncludeRepository := (_ => false),
     licenses := Seq("ASL2" -> url("http://www.apache.org/LICENESE-2.0.txt"))
   )
 }

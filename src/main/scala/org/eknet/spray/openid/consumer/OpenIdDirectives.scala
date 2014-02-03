@@ -1,4 +1,4 @@
-package org.eknet.spray.openid
+package org.eknet.spray.openid.consumer
 
 import spray.routing._
 import scala.concurrent.ExecutionContext

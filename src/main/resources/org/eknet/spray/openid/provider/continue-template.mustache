@@ -1,0 +1,68 @@
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+  <title>spray OpenId - Continue Authentication</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css"/>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>spray OpenId
+      <small>Sample Page</small>
+    </h1>
+  </div>
+  <h2>Continue</h2>
+
+  <p>Continue authentication {{#realm}}with <strong>{{realm}}</strong>{{/realm}} as <strong>{{identity}}</strong>.</p>
+
+  <div class="col-md-8 col-md-offset-1">
+      {{#attributesExist}}
+        <p>The party at '{{realm}}' wants you to provide the following information. The marked fields
+          were requested as required, but you can choose to not provide the information. The
+          sign in process at '{{realm}}' may then not be successful, though.</p>
+          {{#policy_url}}
+            <p>You can read more about it <a href="{{policy_url}}">here.</a></p>
+          {{/policy_url}}
+      {{/attributesExist}}
+    <form role="form" action="{{endpointUrl}}" method="post">
+        {{#params}}
+          <input type="hidden" name="{{name}}" value="{{value}}"/>
+        {{/params}}
+        {{#attributes}}
+          <div class="form-group {{#required}}has-error{{/required}}">
+            <label for="{{name}}">{{label}}</label>
+              {{#select}}
+                <select name="{{name}}" id="{{name}}" class="form-control">
+                    {{#values}}
+                      <option value="{{id}}" {{#selected}}selected="selected"{{/selected}}>{{name}}</option>
+                    {{/values}}
+                </select>
+              {{/select}}
+              {{^select}}
+                <input type="{{type}}" class="form-control" id="{{name}}" name="{{name}}" placeholder="{{label}}" value="{{value}}">
+              {{/select}}
+          </div>
+        {{/attributes}}
+        {{#hiddenAttributes}}
+          <input type="hidden" name="{{name}}" value="{{value}}">
+        {{/hiddenAttributes}}
+        {{^attributesExist}}
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" name="spray-openid.rememberContinue"/> Don't ask this the next time for realm
+                <em>{{realm}}</em>
+              </label>
+            </div>
+          </div>
+        {{/attributesExist}}
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary" name="spray-openid.submitType" value="continue">Continue</button>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

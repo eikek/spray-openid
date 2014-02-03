@@ -12,4 +12,13 @@ object CheckAuthenticationResponse {
       case _ => sys.error("Invalid check-authentication response")
     }
   }
+
+  implicit val checkAuthResponseMarshaller =
+    directResponseMarshaller[CheckAuthenticationResponse] { resp =>
+      filterNonEmpty(Map(
+        "ns" -> resp.ns,
+        "is_valid" -> resp.valid.toString,
+        "invalidate_handle" -> resp.invalidateHandle.getOrElse("")
+      ))
+    }
 }

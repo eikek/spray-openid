@@ -1,14 +1,12 @@
-package org.eknet.spray.openid
+package org.eknet.spray.openid.consumer
 
 import akka.actor.{Props, ActorLogging, Actor}
 import org.eknet.spray.openid.model._
-import spray.http.{DateTime, HttpResponse, HttpRequest, Uri}
+import spray.http.Uri
 import org.eknet.spray.openid.model.PositiveAssertion.ResponseNonce
-import org.eknet.spray.openid.model.AssociationRequest.SessionType
+import org.eknet.spray.openid.model.AssociationRequest.{AssocType, SessionType}
 import scala.concurrent.Future
-import org.parboiled.common.Base64
 import spray.http.HttpRequest
-import scala.Some
 
 object VerifyActor {
   def apply() = Props(classOf[VerifyActor])
@@ -19,25 +17,7 @@ object VerifyActor {
   case class Associate(uri: Uri)
   case class AssociateResult(handle: Option[String])
 
-  case class Assoc(resp: AssociationResponse, keypair: Crypt.DH.DHKeyPair, modulus: BigInt, gen: BigInt) {
-    import scala.concurrent.duration._
-    private val valid = System.currentTimeMillis() + resp.expires.seconds.toMillis
-    def isValid = valid > System.currentTimeMillis()
-    def serverPubkey = resp.pubKey.map(pk => BigInt(Base64.rfc2045().decode(pk)))
-    lazy val sessionType = resp.sessionType match {
-      case "DH-SHA1" => SessionType.sha1(keypair.getPublic.getY, modulus, gen)
-      case "DH-SHA256" => SessionType.sha256(keypair.getPublic.getY, modulus, gen)
-      case "no-encryption" => SessionType.none
-      case _ => sys.error("Invalid session type name: "+ resp.sessionType)
-    }
-    lazy val assocHmac = resp.assocType match {
-      case "HMAC-SHA1" => Crypt.HmacSha1
-      case "HMAC-SHA256" => Crypt.HmacSha256
-      case _ => sys.error("Invalid assoc_type value: "+ resp.assocType)
-    }
-  }
-
-  private case class RegisterAssoc(handle: String, assoc: Assoc)
+  private case class RegisterAssoc(handle: String, assoc: Association)
   private case class RemoveAssoc(handle: String)
   private case class RemoveNonce(nonce: ResponseNonce)
 }
@@ -55,17 +35,16 @@ class VerifyActor extends Actor with ActorLogging {
 
   //todo make delay configurable
   private val cacheTimeout = 5.minutes
-  private var assocs = Map.empty[String, Assoc]
+  private var assocs = Map.empty[String, Association]
   private var nonces = Set.empty[ResponseNonce]
 
   def receive = {
     case Associate(provider) =>
       val (modulus, gen) = (Crypt.DH.defaultModulus, Crypt.DH.defaultG)
       val keypair = Crypt.DH.generateKeyPair(Crypt.DH.parameterSpec(modulus, gen)).get
-      val session = SessionType.sha256(BigInt(keypair.getPublic.getY), modulus, gen)
-      val req = AssociationRequest(session)
+      val req = AssociationRequest(SessionType.sha256(BigInt(keypair.getPublic.getY), modulus, gen))
       val f = assocPipeline(Post(provider, req)).map { resp =>
-        self ! RegisterAssoc(resp.assocHandle, Assoc(resp, keypair, modulus, gen))
+        self ! RegisterAssoc(resp.assocHandle, createAssociation(resp, keypair))
         log.debug(s"Successful associated with $provider: $resp")
         AssociateResult(Some(resp.assocHandle))
       } recover {
@@ -87,9 +66,9 @@ class VerifyActor extends Actor with ActorLogging {
 
     case VerifyAssertion(uri, pos) =>
       val assoc = assocs.get(pos.assocHandle)
-      val f = Verification.verifyAll(uri, nonces, cacheTimeout, assoc)(pos) match {
+      val f1 = Verification.verifyAll(uri, nonces, cacheTimeout, assoc)(pos) match {
         case Left(msg) =>
-          log.error("Verification of OpenId assertion failed: "+ msg)
+          log.debug("Verification of OpenId assertion failed: "+ msg)
           Future.successful(VerifyResult(result = false))
         case Right(_) =>
           if (assoc.isEmpty) {
@@ -97,15 +76,31 @@ class VerifyActor extends Actor with ActorLogging {
             val f = checkAuthFuture(pos)
             f.map(r => VerifyResult(r.valid)).recover({ case x => VerifyResult(result = false)})
           } else {
-            log.info("Positive assertion successfully verified")
             Future.successful(VerifyResult(result = true))
           }
+      }
+      val f2 = Verification.verifyDiscovery(pos).map(VerifyResult.apply)
+      f2.onSuccess {
+        case VerifyResult(false) =>
+          log.error(s"Discovered information for '${pos.claimedId}' did not match positive assertion.")
+      }
+      val fr = for (r1 <- f1; r2 <- f2) yield VerifyResult(r1.result && r2.result)
+      fr.onSuccess {
+        case VerifyResult(true) => log.info("Positive assertion successfully verified")
+        case VerifyResult(false) => log.error("Verification of OpenId assertion failed")
       }
       nonces = nonces + pos.nonce
       context.system.scheduler.scheduleOnce(cacheTimeout, self, RemoveNonce(pos.nonce))
       self ! RemoveAssoc(pos.assocHandle)
-      f pipeTo sender
+      fr pipeTo sender
 
+  }
+
+  private def createAssociation(resp: AssociationResponse, keypair: Crypt.DH.DHKeyPair) = {
+    val atype = AssocType.fromString(resp.assocType)
+    val stype = resp.pubKey.map(pb => SessionType.sha256(pb, Crypt.DH.defaultModulusBase64, Crypt.DH.defaultGBase64))
+    Association(atype, stype.getOrElse(SessionType.none), cacheTimeout,
+      resp.macKey.decodeBase64.toVector, stype.map(_ => keypair))
   }
 
   private val assocPipeline: HttpRequest => Future[AssociationResponse] =

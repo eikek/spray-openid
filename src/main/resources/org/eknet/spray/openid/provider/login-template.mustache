@@ -1,0 +1,58 @@
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+  <title>spray OpenId - Login</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css"/>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>spray OpenId
+      <small>Sample Page</small>
+    </h1>
+  </div>
+  <h2>Sign In</h2>
+
+  <div id="spray-openid.logininfo">
+    <p>You're authenticating {{#realm}}with <strong>{{realm}}</strong>{{/realm}}
+        {{#username}}as <strong>{{identity}}</strong>{{/username}}</p>
+  </div>
+  <br/>
+
+  <div class="col-md-5 col-md-offset-3 porter-loginform">
+    <form role="form" action="{{endpointUrl}}" method="post">
+        {{#loginFailed}}
+          <p class="alert alert-danger alert-dismissable"><strong>Error:</strong> Invalid credentials!</p>
+        {{/loginFailed}}
+        {{#params}}
+          <input type="hidden" name="{{name}}" value="{{value}}"/>
+        {{/params}}
+      <div class="form-group">
+          {{#username}}
+            <input type="text" class="form-control input-lg" id="username" value="{{username}}" disabled="disabled"/>
+            <input type="hidden" name="spray-openid.username" value="{{username}}"/>
+          {{/username}}
+          {{^username}}
+            <label for="username" class="sr-only">Username</label>
+            <input type="text" class="form-control input-lg" id="username" name="spray-openid.username"
+                   placeholder="Username"/>
+          {{/username}}
+      </div>
+      <div class="form-group">
+        <label for="password" class="sr-only">Password</label>
+        <input type="password" class="form-control input-lg" id="password" name="spray-openid.password"
+               placeholder="Password"/>
+      </div>
+      <div class="form-group">
+        <button type="submit" name="spray-openid.submitType" class="btn btn-primary btn-lg" value="signin">Sign in
+        </button>
+        <button type="submit" name="spray-openid.submitType" class="btn btn-default btn-lg" value="cancel">Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

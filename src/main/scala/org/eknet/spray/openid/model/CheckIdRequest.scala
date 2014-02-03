@@ -11,18 +11,26 @@ case class CheckIdRequest(ns: String = namespaceOpenId2,
                           realm: Option[String],
                           adds: Map[String, String]) {
 
-  def appendToQuery(uri: Uri): Uri =
-    uri.withQuery(uri.query.toMap ++ filterNonEmpty(adds ++ Map(
-      "openid.ns" -> ns,
-      "openid.mode" -> mode,
-      "openid.claimed_id" -> claimedId,
-      "openid.identity" -> identity,
-      "openid.assoc_handle" -> assocHandle.getOrElse(""),
-      "openid.return_to" -> returnTo.getOrElse(""),
-      "openid.realm" -> realm.getOrElse("")
-    )))
+  def appendToQuery(uri: Uri): Uri = uri.appendToQuery(toMap)
 
-  def supplement(adds: Map[String, String]) = copy(adds = adds)
+  def toMap = filterNonEmpty(adds ++ Map(
+    "openid.ns" -> ns,
+    "openid.mode" -> mode,
+    "openid.claimed_id" -> claimedId,
+    "openid.identity" -> identity,
+    "openid.assoc_handle" -> assocHandle.getOrElse(""),
+    "openid.return_to" -> returnTo.getOrElse(""),
+    "openid.realm" -> realm.getOrElse("")
+  ))
+
+  def supplement(more: Map[String, String]) = copy(adds = adds ++ more)
+
+  val isImmediate = mode == "checkid_immediate"
+
+  val returnToMatchesRealm = List(returnTo, realm) match {
+    case Some(rto) :: Some(r) :: Nil => uriMatchesRealm(Uri(rto), Uri(r))
+    case _ => true
+  }
 }
 
 object CheckIdRequest {
@@ -48,9 +56,21 @@ object CheckIdRequest {
             identity: String,
             assocHandle: Option[String],
             realm: Option[String],
-            adds: Map[String, String],
             immediatereq: Boolean): CheckIdRequest =
-    if (immediatereq) immediate(claimedId, returnTo, identity, assocHandle, realm, adds)
-    else setup(claimedId, returnTo, identity, assocHandle, realm, adds)
+    if (immediatereq) immediate(claimedId, returnTo, identity, assocHandle, realm, Map.empty)
+    else setup(claimedId, returnTo, identity, assocHandle, realm, Map.empty)
 
+
+  private val fieldList = List("openid.ns", "openid.mode", "openid.claimed_id", "openid.identity",
+    "openid.assoc_handle", "openid.return_to", "openid.realm")
+
+  implicit val CheckIdReqUnmarshaller = indirectReqUnmarshaller { fields =>
+    val fieldSet = fieldList.toSet
+    val adds = fields.filterKeys(x => x.startsWith("openid.") && !fieldSet.contains(x))
+    fieldList.map(fields.get) match {
+      case ns :: Some(mode) :: Some(cid) :: Some(id) :: ah :: rto :: realm :: Nil =>
+        CheckIdRequest(ns.getOrElse(namespaceOpenId11), mode, cid, id, ah, rto, realm, adds)
+      case _ => sys.error(s"Invalid checkid request: $fields")
+    }
+  }
 }

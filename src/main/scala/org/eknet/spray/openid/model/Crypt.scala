@@ -1,4 +1,4 @@
-package org.eknet.spray.openid
+package org.eknet.spray.openid.model
 
 import scala.util.Try
 import java.security._
@@ -6,9 +6,29 @@ import javax.crypto.{Mac, KeyGenerator, SecretKey}
 import java.security.spec.AlgorithmParameterSpec
 import javax.crypto.spec.{DHPublicKeySpec, SecretKeySpec, DHGenParameterSpec, DHParameterSpec}
 import javax.crypto.interfaces.{DHPrivateKey, DHPublicKey}
-import org.parboiled.common.Base64
+import java.util.concurrent.atomic.AtomicInteger
 
 object Crypt {
+
+  private val _random = SecureRandom.getInstance("SHA1PRNG")
+  private val _invcounter = new AtomicInteger(0)
+
+  def random: SecureRandom = {
+    if (_invcounter.compareAndSet(500000, 0)) {
+      _random.setSeed(SecureRandom.getSeed(16))
+    }
+    _invcounter.incrementAndGet()
+    _random
+  }
+
+  def randomString = {
+    //for assoc handles: 33 to 122 is valid according to spec, valid length up to 255
+    val range = ('0' to '9') union ('a' to 'z') union ('A' to 'Z')
+    val len = (random.nextDouble() * 150).toInt + 18
+    def next = (random.nextDouble() * range.length).toInt
+    Array.fill(len)(range(next)).mkString("")
+  }
+
   object Digest {
     val sha1 = digest("SHA1")_
     val sha256 = digest("SHA-256")_
@@ -33,10 +53,10 @@ object Crypt {
       "FAF18828EFD2519F14E45E3826634AF1949E5B535CC829A483B8A76223E5D490A25" +
       "7F05BDFF16F2FB22C583AB", 16)
 
-    val defaultModulusBase64 = Base64.rfc2045().encodeToString(defaultModulus.toByteArray, true)
+    val defaultModulusBase64 = defaultModulus.toByteArray.toBase64
 
-    val defaultGString = "2"
-    val defaultG = BigInt(defaultGString)
+    val defaultG = BigInt("2")
+    val defaultGBase64 = defaultG.toByteArray.toBase64
 
     def generateKeyPair(spec: AlgorithmParameterSpec) =
       Crypt.generateKeyPair(name)(spec).map(new DHKeyPair(_))

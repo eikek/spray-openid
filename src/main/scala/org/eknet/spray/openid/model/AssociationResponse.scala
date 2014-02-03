@@ -1,5 +1,8 @@
 package org.eknet.spray.openid.model
 
+import spray.httpx.marshalling.Marshaller
+import spray.http.FormData
+
 case class AssociationResponse(ns: String,
                                assocHandle: String,
                                sessionType: String,
@@ -20,4 +23,16 @@ object AssociationResponse {
       case _ => sys.error("Invalid association response: "+ kv)
     }
   }
+
+  implicit val AssociationResponseMarshaller =
+    directResponseMarshaller[AssociationResponse]{ res => filterNonEmpty(Map(
+      "ns" -> namespaceOpenId2,
+      "assoc_handle" -> res.assocHandle,
+      "session_type" -> res.sessionType,
+      "assoc_type" -> res.assocType,
+      "expires_in" -> s"${res.expires}",
+      "mac_key" -> (if (res.pubKey.isDefined) "" else res.macKey),
+      "enc_mac_key" -> (if (res.pubKey.isEmpty) "" else res.macKey),
+      "dh_server_public" -> res.pubKey.getOrElse("")
+    ))}
 }

@@ -1,13 +1,15 @@
 package org.eknet.spray.openid
 
-import spray.routing.SimpleRoutingApp
 import akka.actor.ActorSystem
-import spray.http.{MediaTypes, ContentType, HttpEntity}
 import akka.util.Timeout
+import spray.routing.SimpleRoutingApp
+import spray.http.{MediaTypes, ContentType, HttpEntity}
+import org.eknet.spray.openid.model.SimpleRegistration
+import org.eknet.spray.openid.consumer._
 
-object TestApp extends SimpleRoutingApp with OpenIdDirectives with App {
+object RelyingParty extends SimpleRoutingApp with OpenIdDirectives with App {
 
-  implicit val system = ActorSystem("testing-openid")
+  implicit val system = ActorSystem("openid-relyingparty")
   import system.dispatcher
 
   implicit val timeout = Timeout(4000)
@@ -32,14 +34,14 @@ object TestApp extends SimpleRoutingApp with OpenIdDirectives with App {
 
 
   import SimpleRegistration._
-  val fields = Seq(Field.fullname, Field.email.require, Field.language)
+  val fields = Seq(Field.fullname, Field.email.asRequired, Field.language)
 
   startServer("localhost", 8889) {
     path("") {
       complete(HttpEntity(html, loginPage))
     } ~
     path("verify") {
-      verifyId(OpenIdAuth(verify) andGet sreg(fields)) { id =>
+      verifyId(OpenIdAuth(verify) ++ SimpleRegistration(fields) ++ policyUrl("http://google.com")) { id =>
         val fullname = Field.fullname(id)
         val email = Field.email(id)
         val lang = Field.language(id)

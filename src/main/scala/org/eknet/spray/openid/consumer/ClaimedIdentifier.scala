@@ -1,4 +1,4 @@
-package org.eknet.spray.openid
+package org.eknet.spray.openid.consumer
 
 import java.net.{HttpURLConnection, URL}
 import scala.concurrent.{ExecutionContext, Future}
