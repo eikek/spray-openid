@@ -5,7 +5,7 @@ import spray.routing._
 import org.eknet.spray.openid.model.CheckIdRequest
 import org.eknet.spray.openid.provider.MustacheContext.KeyedData
 
-trait MustacheDirectives extends Directives with MustacheContext.BasicConverter {
+trait MustacheDirectives extends Directives with MustacheContext.MoreConverter {
   import MustacheDirectives._
 
   def renderTemplate(ct: ContentType, template: Mustache.Template)(ctx: Mustache.Context) = {
@@ -22,7 +22,6 @@ trait MustacheDirectives extends Directives with MustacheContext.BasicConverter 
       .andThen(KeyedData("identity").put(req.identity))
       .andThen(KeyedData("claimedId").put(req.claimedId))
       .andThen(KeyedData("returnTo").put(req.returnTo))
-      .andThen(SRegExtension.formFields(req))
   }
 }
 

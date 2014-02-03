@@ -68,7 +68,7 @@ object Discovery {
       <Service priority={priority.toString}>
         { types.map(t => <Type>{t}</Type>) }
         <URI>{ providerUri }</URI>
-        { localId.map(lid => <LocalID>{lid}</LocalID>) }
+        { localId.map(lid => <LocalID>{lid}</LocalID>).orNull }
       </Service>
   }
   object ClaimedIdElement {

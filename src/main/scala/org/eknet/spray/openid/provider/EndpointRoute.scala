@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext
 import akka.util.Timeout
 import org.eknet.spray.openid.provider.AssociationActor.AssocHandle
 import org.eknet.spray.openid.model
+import org.eknet.spray.openid.model.SimpleRegistration.Field
 
 /**
  * Sketches the outline of the openid endpoint. You have to fill in the gaps
@@ -54,6 +55,10 @@ class EndpointRoute(settings: EndpointSettings) extends Directives with Provider
 
   private def readyForAssertion(req: CheckIdRequest, id: settings.hook.Account): Directive0 =
     if (req.isImmediate) pass
-    else settings.hook.isUserSubmit | settings.hook.skipConfirmation(id)
+    else settings.hook.isUserSubmit | (noExtension & settings.hook.skipConfirmation(id))
 
+  private def noExtension: Directive0 = formField(Field.ns.fullname.?).flatMap {
+    case Some(_) => reject()
+    case _ => pass
+  }
 }

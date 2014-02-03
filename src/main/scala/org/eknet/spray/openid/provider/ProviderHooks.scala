@@ -58,7 +58,7 @@ trait ProviderHooks {
 
   /**
    * Determine for the given account, whether to display the "confirmation page"
-   * (pass) or not (reject). If rejected, the assertion is sent immediately to
+   * (reject) or not (pass). If passed, the assertion is sent immediately to
    * the relying party.
    * @param a
    * @return
@@ -94,9 +94,9 @@ object ProviderHooks {
     extends ProviderHooks with MustacheDirectives with ProviderDirectives with Directives {
     import MustacheContext._
 
-    private val renderLogin = renderHtmlTemplate(loginTempl)_
-    private val renderConfirm = renderHtmlTemplate(confirmTempl)_
-    private val extract: String => Option[String] = url =>
+    val renderLogin = renderHtmlTemplate(loginTempl)_
+    val renderConfirm = renderHtmlTemplate(confirmTempl)_
+    val extract: String => Option[String] = url =>
       if (url == model.identifierSelect) None else Some(usernameIdentity.fromIdentityUrl(url))
 
     type Account = A
@@ -112,19 +112,28 @@ object ProviderHooks {
     }
 
     def renderConfirmationPage(req: CheckIdRequest, a: A, endpoint: Uri) = {
-      val ctx = requestContext(req).andThen(KeyedData("endpointUrl").put(endpoint.toString()))
-      renderConfirm(ctx(empty))
+      val context = confirmPageContext(req, a, endpoint)
+      renderConfirm(context(empty))
+    }
+
+    protected def confirmPageContext(req: CheckIdRequest, a: A, endpoint: Uri) = {
+      requestContext(req)
+        .andThen(KeyedData("endpointUrl").put(endpoint))
+        .andThen(SRegExtension.formFields(req))
     }
 
     def renderLoginPage(req: CheckIdRequest, endpoint: Uri) = {
       formField("spray-openid.submitType".?) { st =>
-        val context = requestContext(req)
-          .andThen(KeyedData("endpointUrl").put(endpoint.toString()))
-          .andThen(KeyedData("loginFailed").put(st.exists(_ == "signin")))
-          .andThen(KeyedData("username").put(extract(req.identity)))
+        val context = loginPageContext(req, st, endpoint)
         renderLogin(context(empty))
       }
     }
+
+    protected def loginPageContext(req: CheckIdRequest, submitType: Option[String], endpoint: Uri) = requestContext(req)
+      .andThen(KeyedData("endpointUrl").put(endpoint))
+      .andThen(KeyedData("loginFailed").put(submitType.exists(_ == "signin")))
+      .andThen(KeyedData("username").put(extract(req.identity)))
+
 
     def authenticate() = auth
 

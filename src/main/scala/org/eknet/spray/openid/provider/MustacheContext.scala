@@ -18,6 +18,7 @@ package org.eknet.spray.openid.provider
 
 import Mustache.Context
 import java.util.{TimeZone, Locale}
+import spray.http.Uri
 
 /**
  * Helps with populating [[scala.collection.Map]]s for use with [[Mustache]]
@@ -147,6 +148,10 @@ object MustacheContext {
           }
         SelectField(obj.name, obj.label, obj.value, ("", "None") :: tzs.toList).toMap
       }
+    }
+
+    implicit object UriConv extends ValueConverter[Uri] {
+      def convert(obj: Uri) = obj.toString()
     }
   }
   object MoreConverter extends MoreConverter
