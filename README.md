@@ -48,7 +48,7 @@ field or parameter with name `openid_identifier` or directly given to
 the `OpenIdAuth` object.
 
 A complete example is
-[here](tree/master/src/test/scala/org/eknet/spray/openid/RelyingParty.scala).
+[here](src/test/scala/org/eknet/spray/openid/RelyingParty.scala).
 
 
 ## Usage -- Provider
@@ -69,7 +69,7 @@ For the `DiscoveryRoute` the `DiscoverySetting` specifies for when to respond
 to discovery requests. Both are combined in `ProviderRoute`.
 
 A complete example is
-[here](tree/master/src/test/scala/org/eknet/spray/openid/Provider.scala).
+[here](src/test/scala/org/eknet/spray/openid/Provider.scala).
 
 ## Todo
 
