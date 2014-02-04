@@ -11,8 +11,6 @@ import akka.util.Timeout
 
 trait ProviderDirectives extends Directives {
 
-  def endpointUri = requestUri.map(_.withQuery())
-
   def isImmediateRequest: Directive0 = anyParam("openid.mode").flatMap {
     case "checkid_immediate" => pass
     case _ => reject()
@@ -35,30 +33,28 @@ trait ProviderDirectives extends Directives {
     }
   }
 
-  def redirectPositiveAssertion(req: CheckIdRequest, identity: String, assocRef: ActorRef)
+  def redirectPositiveAssertion(req: CheckIdRequest, identity: String, endpoint: Uri, assocRef: ActorRef)
                                (implicit ec: ExecutionContext, to: Timeout): Route = {
     import org.eknet.spray.openid.model._
     import akka.pattern.ask
-    endpointUri { ep =>
-      val values = (req.toMap ++ Map(
-        "openid.ns" -> namespaceOpenId2,
-        "openid.identity" -> identity,
-        "openid.response_nonce" -> ResponseNonce.next.asString,
-        "openid.op_endpoint" -> ep.toString,
-        "openid.mode" -> "id_res"
-      )).filterKeys(responseFieldFilter)
+    val values = (req.toMap ++ Map(
+      "openid.ns" -> namespaceOpenId2,
+      "openid.identity" -> identity,
+      "openid.response_nonce" -> ResponseNonce.next.asString,
+      "openid.op_endpoint" -> endpoint.toString,
+      "openid.mode" -> "id_res"
+    )).filterKeys(responseFieldFilter)
 
-      val f = (assocRef ? SignValues(req.assocHandle, values)).mapTo[ValueSignature]
-      onSuccess(f) { sig =>
-        val pos = values ++ Map(
-          "openid.sig" -> sig.sig,
-          "openid.signed" -> sig.signed.mkString(","),
-          "openid.assoc_handle" -> sig.handle
-        )
+    val f = (assocRef ? SignValues(req.assocHandle, values)).mapTo[ValueSignature]
+    onSuccess(f) { sig =>
+      val pos = values ++ Map(
+        "openid.sig" -> sig.sig,
+        "openid.signed" -> sig.signed.mkString(","),
+        "openid.assoc_handle" -> sig.handle
+      )
 
-        withValidReturnTo(req) { uri =>
-          redirect(uri.appendToQuery(pos), StatusCodes.Found)
-        }
+      withValidReturnTo(req) { uri =>
+        redirect(uri.appendToQuery(pos), StatusCodes.Found)
       }
     }
   }

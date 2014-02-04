@@ -35,7 +35,7 @@ object Provider extends SimpleRoutingApp with Directives with App {
   }
 
   val discoverySetting = DiscoverySettings.forPathPrefix(Uri(identityBase))
-  val endpointSetting = EndpointSettings(hooks, assocRef)
+  val endpointSetting = EndpointSettings(discoverySetting.endpointUrl, hooks, assocRef)
   val provider = new ProviderRoute(endpointSetting, discoverySetting)
 
   startServer("localhost", 8888) {

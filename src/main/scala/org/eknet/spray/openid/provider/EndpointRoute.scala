@@ -34,21 +34,20 @@ class EndpointRoute(settings: EndpointSettings) extends Directives with Provider
       } ~
       settings.hook.authenticate() { id =>
         readyForAssertion(req, id) {
-          redirectPositiveAssertion(req, settings.hook.accountIdentity.toIdentityUrl(id), settings.assocRef)
-        } ~
-        endpointUri { endpoint =>
+          val identity = settings.hook.accountIdentity.toIdentityUrl(id)
+          redirectPositiveAssertion(req, identity, settings.endpoint, settings.assocRef)
+        } ~ {
           val identity = settings.hook.accountIdentity.toIdentityUrl(id)
           val request = if (req.claimedId == model.identifierSelect) {
             req.copy(claimedId = identity, identity = identity)
           } else {
             req.copy(identity = identity)
           }
-          settings.hook.renderConfirmationPage(request, id, endpoint)
+          settings.hook.renderConfirmationPage(request, id, settings.endpoint)
         }
-      } ~
-      endpointUri { endpoint =>
+      } ~ {
         if (req.isImmediate) redirectNegativeAssertion(req, NegativeAssertion.setupNeeded())
-        else settings.hook.renderLoginPage(req, endpoint)
+        else settings.hook.renderLoginPage(req, settings.endpoint)
       }
     }
   }
