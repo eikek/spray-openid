@@ -125,8 +125,6 @@ object Crypt {
   def verifySig(key: SecretKey)(signature: Array[Byte], data: Array[Byte]): Try[Boolean] = Try {
     val sigx = sign(key, data).get
     if (signature.length != sigx.length) false
-    else signature.zip(sigx).foldLeft(true) { case (b, (s1, s2)) =>
-      b && (s1 == s2)
-    }
+    else signature.zip(sigx).foldLeft(0) { case (r, (s1, s2)) => r | (s1 ^ s2) } == 0
   }
 }
