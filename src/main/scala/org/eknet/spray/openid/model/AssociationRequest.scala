@@ -1,7 +1,8 @@
 package org.eknet.spray.openid.model
 
 import org.eknet.spray.openid.model.AssociationRequest._
-import spray.http.FormData
+import spray.http.{MediaTypes, FormData}
+import MediaTypes._
 
 case class AssociationRequest(sessionType: SessionType, assocType: AssocType = AssocType.sha256) extends DirectRequest {
   val mode = "associate"
@@ -50,7 +51,7 @@ object AssociationRequest {
   }
 
   implicit val AssociateReqMarshaller =
-    Marshaller.delegate[AssociationRequest, FormData](`form-urlencoded`)(req => {
+    Marshaller.delegate[AssociationRequest, FormData](`application/x-www-form-urlencoded`)(req => {
       FormData(filterNonEmpty(Map(
         "openid.ns" -> req.ns,
         "openid.mode" -> req.mode,

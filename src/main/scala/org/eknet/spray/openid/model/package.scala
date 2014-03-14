@@ -4,6 +4,7 @@ import spray.http._
 import scala.util.{Success, Try}
 import org.parboiled.common.Base64
 import spray.httpx.marshalling.Marshaller
+import MediaTypes._
 
 package object model {
   import spray.httpx.unmarshalling._
@@ -12,9 +13,6 @@ package object model {
   val namespaceOpenId11 = "http://openid.net/signon/1.1"
   val namespaceOpenId2 = "http://specs.openid.net/auth/2.0"
 
-  val `text/plain` = MediaTypes.`text/plain`
-  val `text/html` = MediaTypes.`text/html`
-  val `form-urlencoded` = MediaTypes.`application/x-www-form-urlencoded`
   val `application/xrds+xml` = {
     val mt = MediaType.custom(mainType = "application", subType = "xrds+xml")
     MediaTypes.register(mt)
@@ -49,7 +47,7 @@ package object model {
   }
 
   def directReqUnmarshaller[A](f: Map[String, String] => A): Unmarshaller[A] = {
-    Unmarshaller.delegate[FormData, A](`form-urlencoded`) { fdata =>
+    Unmarshaller.delegate[FormData, A](`application/x-www-form-urlencoded`) { fdata =>
       f(fdata.fields.toMap)
     }
   }

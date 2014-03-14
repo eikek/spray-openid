@@ -25,7 +25,7 @@ This project depends on
 and needs therefore transitive dependencies of both (i.e. the
 parboiled library for doing base64 de/encoding).
 
-## Consumer -- Usage
+## Using the Consumer
 
 One actor is needed for storing associations and tracking response
 nonces, which are used to verify authentication responses. You need to
@@ -51,14 +51,15 @@ A complete example is
 [here](src/test/scala/org/eknet/spray/openid/RelyingParty.scala).
 
 
-## Usage -- Provider
+## Using the Provider
 
 Creating a provider is a bit more involved, since you need to fill the
 missing parts. An OpenId provider works by authenticating an end user
 and redirecting its user agent back to the relying party site with an
 assertion about its identifier. Thus it needs to render a login page
-and also an additionaly confirmation page. Page rendering is beyond the
-scope of this library, but to get started quickly examples are provided.
+and also an additionaly confirmation page. Page rendering is a bit beyond
+the scope of this library, but a simple server side page rendering functionality
+is provided to get started quickly.
 
 The OpenId endpoint, provided by `EndpointRoute` class needs a `ProviderHooks`
 impl which collects all missing parts in one trait. The provided one defines
@@ -85,4 +86,4 @@ but there is still a lot to do, for example:
 * compatibility with OpenId v1 (?)
 
 Despite these things, the consumer part works with the providers I tried so far
-(i.e. Google and MyOpenId) and I found the provider part working with `OpenId4Java´.
+(i.e. Google and MyOpenId) and I found the provider part working with `OpenId4Java`.

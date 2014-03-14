@@ -2,7 +2,7 @@ package org.eknet.spray.openid.model
 
 import spray.httpx.marshalling.Marshaller
 import spray.http.FormData
-import org.eknet.spray.openid.model.PositiveAssertion.ResponseNonce
+import spray.http.MediaTypes._
 
 case class CheckAuthenticationRequest(pos: PositiveAssertion) extends DirectRequest {
   def mode = "check_authentication"
@@ -17,7 +17,7 @@ case class CheckAuthenticationRequest(pos: PositiveAssertion) extends DirectRequ
 object CheckAuthenticationRequest {
 
   implicit val checkAuthRequestMarshaller =
-    Marshaller.delegate[CheckAuthenticationRequest, FormData](`form-urlencoded`)(req => {
+    Marshaller.delegate[CheckAuthenticationRequest, FormData](`application/x-www-form-urlencoded`)(req => {
       val params = req.pos.fields.updated("openid.mode", req.mode).updated("openid.ns", req.ns)
       FormData(params)
     })

@@ -1,10 +1,10 @@
 package org.eknet.spray.openid.model
 
-import java.net.{HttpURLConnection, URL}
 import scala.xml._
-import spray.http.{HttpResponse, HttpRequest, HttpEntity, ContentTypeRange}
 import scala.concurrent.{ExecutionContext, Future}
 import akka.actor.ActorRefFactory
+import spray.http._
+import spray.http.HttpRequest
 
 object Discovery {
   import spray.client.pipelining._
@@ -140,6 +140,7 @@ object Discovery {
 
   object HtmlElement {
     import spray.httpx.unmarshalling._
+    import MediaTypes._
     private val linkRegex = """(?s)<link.*?(href|rel)=(.*?)(href|rel)=(.*?)>""".r
     private val hrefRegex = """.*?href=("|')(.*?)("|').*""".r
 
