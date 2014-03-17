@@ -54,10 +54,6 @@ class EndpointRoute(settings: EndpointSettings) extends Directives with Provider
 
   private def readyForAssertion(req: CheckIdRequest, id: settings.hook.Account): Directive0 =
     if (req.isImmediate) pass
-    else settings.hook.isUserSubmit | (noExtension & settings.hook.skipConfirmation(id))
+    else settings.hook.isUserSubmit | settings.hook.skipConfirmation(id)
 
-  private def noExtension: Directive0 = formField(Field.ns.fullname.?).flatMap {
-    case Some(_) => reject()
-    case _ => pass
-  }
 }

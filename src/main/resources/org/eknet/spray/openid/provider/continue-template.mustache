@@ -48,16 +48,14 @@
         {{#hiddenAttributes}}
           <input type="hidden" name="{{name}}" value="{{value}}">
         {{/hiddenAttributes}}
-        {{^attributesExist}}
-          <div class="form-group">
-            <div class="checkbox">
-              <label>
-                <input type="checkbox" name="spray-openid.rememberContinue"/> Don't ask this the next time for realm
-                <em>{{realm}}</em>
-              </label>
-            </div>
-          </div>
-        {{/attributesExist}}
+      <div class="form-group">
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="porter.rememberContinue"/>
+            Don't ask this the next time for realm <em>{{realm}}</em>.
+          </label>
+        </div>
+      </div>
       <div class="form-group">
         <button type="submit" class="btn btn-primary" name="spray-openid.submitType" value="continue">Continue</button>
       </div>
