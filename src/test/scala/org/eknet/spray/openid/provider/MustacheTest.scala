@@ -16,11 +16,10 @@
 
 package org.eknet.spray.openid.provider
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Matchers, FunSuite}
 import scala.util.Failure
 
-class MustacheTest extends FunSuite with ShouldMatchers {
+class MustacheTest extends FunSuite with Matchers {
   import Mustache._
   import Mustache.TemplateParser._
 

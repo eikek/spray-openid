@@ -54,8 +54,8 @@ class AssociationActor extends Actor with ActorLogging {
       context.system.scheduler.scheduleOnce(timeout, self, RemoveAssoc(handle))
       sender ! AssocHandle(handle, assoc)
 
-    case AssociationRequest(st, at) =>
-      self forward CreateAssoc(at, st, priv = false)
+    case r@AssociationRequest(st) =>
+      self forward CreateAssoc(r.assocType, st, priv = false)
 
     case RemoveAssoc(handle) =>
       publicMap = publicMap - handle

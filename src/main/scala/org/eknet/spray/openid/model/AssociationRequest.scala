@@ -4,8 +4,9 @@ import org.eknet.spray.openid.model.AssociationRequest._
 import spray.http.{MediaTypes, FormData}
 import MediaTypes._
 
-case class AssociationRequest(sessionType: SessionType, assocType: AssocType = AssocType.sha256) extends DirectRequest {
+case class AssociationRequest(sessionType: SessionType) extends DirectRequest {
   val mode = "associate"
+  val assocType = if (sessionType.name == "DH-SHA1") AssocType.sha1 else AssocType.sha256
 }
 
 object AssociationRequest {
@@ -74,7 +75,11 @@ object AssociationRequest {
             case Some(pkey) => SessionType(st, pkey, dmod.getOrElse(Crypt.DH.defaultModulusBase64), dgen.getOrElse(Crypt.DH.defaultGBase64))
             case _ => SessionType.none
           }
-          AssociationRequest(session, AssocType.fromString(at))
+          val req = AssociationRequest(session)
+          if (session != SessionType.none && AssocType.fromString(at) != req.assocType) {
+            throw new IllegalArgumentException("Invalid request: association-type does not match session type")
+          }
+          req
         case _ => sys.error("Invalid association request: "+ fields)
       }
     }

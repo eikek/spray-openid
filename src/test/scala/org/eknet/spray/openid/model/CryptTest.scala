@@ -1,9 +1,8 @@
 package org.eknet.spray.openid.model
 
-import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Matchers, FunSuite}
 
-class CryptTest extends FunSuite with ShouldMatchers {
+class CryptTest extends FunSuite with Matchers {
 
   test("verify signature") {
     val key = Crypt.HmacSha1.generateKey.get
