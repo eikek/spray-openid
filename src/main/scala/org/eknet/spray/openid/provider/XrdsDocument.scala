@@ -10,7 +10,7 @@ object XrdsDocument {
 
   def apply(endpoint: Uri, xrdsType: XrdsDocument.XrdsType): ServiceList = {
     val elem = xrdsType match {
-      case Server => OpElement(endpoint.toString(), List(ClaimedIdElement.version), 0)
+      case Server => OpElement(endpoint.toString(), List(OpElement.version), 0)
       case Signon => ClaimedIdElement(endpoint.toString(), None, List(ClaimedIdElement.version), 0)
     }
     ServiceList("", List(elem))

@@ -3,15 +3,15 @@ import sbt.Keys._
 
 object Version {
   val scala = "2.10.3"
-  val scalaTest = "1.9.1"
-  val spray = "1.2.0"
-  val akka = "2.2.3"
+  val spray = "1.2.1"
+  val akka = "2.2.4"
 }
 
 object Deps {
   val testBasics = Seq(
-    "org.scalatest" %% "scalatest" % "1.9.1",
-    "org.scalacheck" %% "scalacheck" % "1.10.1",
+    "org.scalatest" %% "scalatest" % "2.1.0",
+    "org.scalacheck" %% "scalacheck" % "1.11.3",
+    "org.specs2" %% "specs2" % "2.3.10",
     "io.spray" % "spray-can" % Version.spray,
     "io.spray" % "spray-testkit" % Version.spray
   ) map (_ % "test")
