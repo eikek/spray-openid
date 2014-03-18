@@ -20,7 +20,6 @@ object Provider extends SimpleRoutingApp with Directives with App {
   val identityBase = "http://localhost:8888/"
 
   //here the user is authenticated if the password equals the username
-  //... just an example ;-)
   val hooks = ProviderHooks(AccountIdentity.urlSuffix(identityBase)) {
     val fromForm: Directive1[String] = formField("spray-openid.username").flatMap { un =>
       formField("spray-openid.password").flatMap { pw: String =>

@@ -6,19 +6,30 @@ import spray.http.Uri.Path
 import shapeless.HNil
 
 case class DiscoverySettings(endpointUrl: Uri, xrdsServer: Directive0, identityPath: Directive0) {
-  def endpointMatcher: PathMatcher0 = {
-    import PathMatchers._
+  def endpointPath: Directive0 = {
+    import spray.routing.directives.PathDirectives._
     endpointUrl.path match {
-      case Path.Empty => ""
-      case Path.Slash(Path.Empty) => ""
-      case p if p.startsWithSlash => separateOnSlashes(p.dropChars(1).toString())
-      case p => separateOnSlashes(p.toString())
+      case Path.Empty => pathEndOrSingleSlash
+      case Path.Slash(Path.Empty) => pathEndOrSingleSlash
+      case p if p.startsWithSlash => path(separateOnSlashes(p.dropChars(1).toString()))
+      case p => path(separateOnSlashes(p.toString()))
     }
   }
 }
 
 object DiscoverySettings {
 
+  /**
+   * Creates a [[DiscoverySettings]] based on the given uri. The endpoint
+   * url and discovery urls are simply suffixed to `baseurl`:
+   *
+   *  - endpointUrl: baseUrl + "/openid/endpoint"
+   *  - endpoint discovery: baseUrl + "/openid/auth"
+   *  - identity discovery: baseUrl + Segment
+   *
+   * @param baseUrl
+   * @return
+   */
   def forPathPrefix(baseUrl: Uri): DiscoverySettings = {
     import Directives._
     val ep = Uri("/openid/endpoint").resolvedAgainst(baseUrl.noSlashAtEnd)

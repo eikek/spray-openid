@@ -11,7 +11,7 @@ class ProviderRoute(endpointSettings: EndpointSettings, discoverySettings: Disco
   val discovery = new DiscoveryRoute(discoverySettings)
 
   def route(implicit ec: ExecutionContext, to: Timeout): Route = {
-    path(discoverySettings.endpointMatcher) {
+    discoverySettings.endpointPath {
       endpoint.route
     } ~
     discovery.route
