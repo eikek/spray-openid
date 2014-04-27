@@ -2,7 +2,7 @@ import sbt._
 import sbt.Keys._
 
 object Version {
-  val scala = "2.10.3"
+  val scala = "2.10.4"
   val spray = "1.2.1"
   val akka = "2.2.4"
 }
