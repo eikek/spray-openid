@@ -56,7 +56,7 @@ object SprayOpenId extends sbt.Build {
   }
   
   override lazy val settings = super.settings ++ Seq(
-    version := "0.1.0",
+    version := "0.2.0-SNAPSHOT",
     resolvers ++= Seq("spray repo" at "http://repo.spray.io"),
     publishTo := Some("eknet-maven2" at "https://eknet.org/maven2"),
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
